@@ -95,7 +95,7 @@ library(lmtest)
 lr<-data.frame()
 distance<-c("X5KParcial", "X10KParcial","X15KParcial","X20KParcial","X25KParcial","X30KParcial","X35KParcial","X40KParcial")
 for (i in distance) {
-  f <- paste(i, "~ Age + Pace")
+  f <- paste(i, "~ X30K + X40K")
   model = lm(as.formula(f), M1834)
   #print(model)
   #Verify linear regression model
