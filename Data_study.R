@@ -20,15 +20,13 @@ M1834$Official.Time <- lubridate::period_to_seconds(hms(M1834$Official.Time))
 M1834$Bib <- as.numeric(M1834$Bib)
 
 #Filtering for our target: EX: Man of 18-34 years
-M1834 <- subset(M1834, M1834$M.F == "M" & M1834$Age >= 18 & M1834$Age <= 34 & M1834$Official.Time < 11100,)
+M1834 <- subset(M1834, M1834$M.F == "M" & M1834$Age >= 18 & M1834$Age <= 34,)
 #Delete no relevant columns
 M1834 <- subset(M1834, select = -c(State,Citizen,X.1,Half,Proj.Time))
 summary(M1834)
 #Remove the rows that have null values in any column
 M1834 <- na.omit(M1834)
 
-#Compute The parcial times of each segment
-#How much time they take from one segment to the following (ex. x5k to x10k)
 distance<-c("X5K","X10K","X15K","X20K","X25K","X30K","X35K","X40K","Official.Time")
 for (k in distance) {
   if (k != "X5K") {
@@ -77,38 +75,37 @@ for (k in order(cumsums)) {
   cat("/")
 }
 
-hist(M1834$X5KParcial)
-hist(M1834$X10KParcial)
-
-library(FactoMineR)
-M1834pca <- subset(M1834, select = -c(Name,M.F,City,Country))
-pca <- PCA(M1834pca)
-summary(pca)
-
 #Define elite and non elite groups
-Elite <- subset(M1834, M1834$Official.Time <= 9000)
-NoElite <- subset(M1834, M1834$Official.Time > 9000)
-summary(Elite$Pace)
-summary(NoElite$Pace)
+print(mean(M1834$Official.Time))
+Elite <- subset(M1834, M1834$Official.Time <= mean(M1834$Official.Time))
+NoElite <- subset(M1834, M1834$Official.Time > mean(M1834$Official.Time))
+Improvement <- mean(Elite$Pace) / mean(NoElite$Pace)
+print(length(M1834$Pace))
+print(length(Elite$Pace))
+print(length(NoElite$Pace))
+ElitePercent <- length(Elite$Pace) / length(M1834$Pace)
+print(Improvement)
+print(ElitePercent)
 
 ######################################
 #Model creation
 library(lmtest)
 
+
 lr<-data.frame()
 distance<-c("X5KParcial", "X10KParcial","X15KParcial","X20KParcial","X25KParcial","X30KParcial","X35KParcial","X40KParcial")
 for (i in distance) {
-  f <- paste(i, "~ Age + Pace")
+  f <- paste(i," ~  Pace + Age")
   model = lm(as.formula(f), M1834)
-  print(model)
+  #print(model)
   #Verify linear regression model
   # Ensure the linear regression is valid by checking:
   # 1. Normality
-  print(shapiro.test(residuals(model)))
+  #print(shapiro.test(residuals(model)))
   # 2. Homogeneity
-  print(bptest(model))
+  #print(bptest(model))
   # 3. Independence
-  print(dwtest(model, alternative = "two.sided"))
+  #print(dwtest(model, alternative = "two.sided"))
   
   lr <- rbind(lr, model$coefficients)
 }
@@ -122,7 +119,7 @@ library(unrepx)
 #(---, +--, -+-, ++-, --+, +-+, -++, +++)
 #Compy answer values from GPSS simulation
 answer <- c(23135.57,22408.35,22152.81,16823.61,22757.01,22428.15,22540.75,12895.36)
-factors <- c("Eat", "WC", "Water")
+factors <- c("Food", "WC", "Water")
 yates(answer, factors)
 
 ###################################
